@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import pypdf; print\\('pypdf ok'\\)\")",
+      "Bash(python -c \"import pdfplumber; print\\('pdfplumber ok'\\)\")",
+      "Bash(python -c \"import fitz; print\\('pymupdf ok'\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -c ' *)",
+      "Bash(python -m pip install pypdf pdfplumber)",
+      "Bash(where python *)",
+      "Bash(py --version)",
+      "Bash(py -m pip --version)",
+      "Bash(py -m pip install pdfplumber --quiet)",
+      "Bash(py -c \"import pdfplumber; print\\('ok'\\)\")",
+      "Bash(py -c ' *)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet --list-sdks)",
+      "Bash(dotnet --list-runtimes)",
+      "Bash(dotnet build *)",
+      "Read(//c/Users/gbirk/YandexDisk/Документы/Учеба/6 семестр \\(Герман\\)/ТОЛО/**)"
+    ]
+  }
+}
