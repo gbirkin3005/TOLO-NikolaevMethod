@@ -58,11 +58,8 @@ $K_{0}$ — модифицированная функция Бесселя 2-г�
 | Растровая отрисовка | [SkiaSharp](https://github.com/mono/SkiaSharp) |
 
 ## Требования
-
-- **Запуск собранной версии:** Windows x64. Self-contained сборка не требует
-  установленного .NET; framework-dependent сборка требует
-  **.NET 10 Desktop Runtime**.
-- **Сборка из исходников:** .NET 10 SDK (Visual Studio 2022/2026 или CLI).
+  **.NET 10 Desktop Runtime** (Среда выполнения рабочего стола .NET 10)
+  https://dotnet.microsoft.com/ru-ru/download/dotnet/10.0
 
 ## Использование
 
