@@ -41,6 +41,7 @@
             formsPlot5 = new ScottPlot.WinForms.FormsPlot();
             btnSave = new Button();
             btnClose = new Button();
+            btnCreateReport = new Button();
             tabControl.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
@@ -60,16 +61,16 @@
             tabControl.Location = new Point(12, 12);
             tabControl.Name = "tabControl";
             tabControl.SelectedIndex = 0;
-            tabControl.Size = new Size(1109, 500);
+            tabControl.Size = new Size(1158, 510);
             tabControl.TabIndex = 0;
             // 
             // tabPage1
             // 
             tabPage1.Controls.Add(formsPlot1);
-            tabPage1.Location = new Point(4, 27);
+            tabPage1.Location = new Point(4, 34);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(1101, 469);
+            tabPage1.Size = new Size(1150, 472);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Температура по Y";
             tabPage1.UseVisualStyleBackColor = true;
@@ -81,16 +82,16 @@
             formsPlot1.Location = new Point(3, 3);
             formsPlot1.Margin = new Padding(4, 5, 4, 5);
             formsPlot1.Name = "formsPlot1";
-            formsPlot1.Size = new Size(1095, 463);
+            formsPlot1.Size = new Size(1144, 466);
             formsPlot1.TabIndex = 0;
             // 
             // tabPage2
             // 
             tabPage2.Controls.Add(formsPlot2);
-            tabPage2.Location = new Point(4, 27);
+            tabPage2.Location = new Point(4, 39);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(1101, 469);
+            tabPage2.Size = new Size(1101, 457);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Температура по X";
             tabPage2.UseVisualStyleBackColor = true;
@@ -102,15 +103,15 @@
             formsPlot2.Location = new Point(3, 3);
             formsPlot2.Margin = new Padding(4, 5, 4, 5);
             formsPlot2.Name = "formsPlot2";
-            formsPlot2.Size = new Size(1095, 463);
+            formsPlot2.Size = new Size(1095, 451);
             formsPlot2.TabIndex = 1;
             // 
             // tabPage3
             // 
             tabPage3.Controls.Add(formsPlot3);
-            tabPage3.Location = new Point(4, 27);
+            tabPage3.Location = new Point(4, 39);
             tabPage3.Name = "tabPage3";
-            tabPage3.Size = new Size(1101, 469);
+            tabPage3.Size = new Size(1101, 457);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Изотермы";
             tabPage3.UseVisualStyleBackColor = true;
@@ -122,15 +123,15 @@
             formsPlot3.Location = new Point(0, 0);
             formsPlot3.Margin = new Padding(4, 5, 4, 5);
             formsPlot3.Name = "formsPlot3";
-            formsPlot3.Size = new Size(1101, 469);
+            formsPlot3.Size = new Size(1101, 457);
             formsPlot3.TabIndex = 1;
             // 
             // tabPage4
             // 
             tabPage4.Controls.Add(formsPlot4);
-            tabPage4.Location = new Point(4, 27);
+            tabPage4.Location = new Point(4, 39);
             tabPage4.Name = "tabPage4";
-            tabPage4.Size = new Size(1101, 469);
+            tabPage4.Size = new Size(1101, 457);
             tabPage4.TabIndex = 3;
             tabPage4.Text = "Стадия нагрева";
             tabPage4.UseVisualStyleBackColor = true;
@@ -142,15 +143,15 @@
             formsPlot4.Location = new Point(0, 0);
             formsPlot4.Margin = new Padding(4, 5, 4, 5);
             formsPlot4.Name = "formsPlot4";
-            formsPlot4.Size = new Size(1101, 469);
+            formsPlot4.Size = new Size(1101, 457);
             formsPlot4.TabIndex = 1;
             // 
             // tabPage5
             // 
             tabPage5.Controls.Add(formsPlot5);
-            tabPage5.Location = new Point(4, 27);
+            tabPage5.Location = new Point(4, 39);
             tabPage5.Name = "tabPage5";
-            tabPage5.Size = new Size(1101, 469);
+            tabPage5.Size = new Size(1101, 457);
             tabPage5.TabIndex = 4;
             tabPage5.Text = "После охлаждения";
             tabPage5.UseVisualStyleBackColor = true;
@@ -162,15 +163,15 @@
             formsPlot5.Location = new Point(0, 0);
             formsPlot5.Margin = new Padding(4, 5, 4, 5);
             formsPlot5.Name = "formsPlot5";
-            formsPlot5.Size = new Size(1101, 469);
+            formsPlot5.Size = new Size(1101, 457);
             formsPlot5.TabIndex = 1;
             // 
             // btnSave
             // 
             btnSave.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnSave.Location = new Point(922, 518);
+            btnSave.Location = new Point(922, 528);
             btnSave.Name = "btnSave";
-            btnSave.Size = new Size(103, 30);
+            btnSave.Size = new Size(129, 46);
             btnSave.TabIndex = 1;
             btnSave.Text = "Сохранить";
             btnSave.UseVisualStyleBackColor = true;
@@ -179,21 +180,33 @@
             // btnClose
             // 
             btnClose.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnClose.Location = new Point(1031, 518);
+            btnClose.Location = new Point(1057, 528);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(90, 30);
+            btnClose.Size = new Size(113, 46);
             btnClose.TabIndex = 2;
             btnClose.Text = "Закрыть";
             btnClose.UseVisualStyleBackColor = true;
             btnClose.Click += btnClose_Click;
             // 
+            // btnCreateReport
+            // 
+            btnCreateReport.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnCreateReport.Location = new Point(686, 528);
+            btnCreateReport.Name = "btnCreateReport";
+            btnCreateReport.Size = new Size(230, 46);
+            btnCreateReport.TabIndex = 3;
+            btnCreateReport.Text = "Создать отчёт Word";
+            btnCreateReport.UseVisualStyleBackColor = true;
+            btnCreateReport.Click += btnCreateReport_Click;
+            // 
             // GraphsForm
             // 
-            AutoScaleDimensions = new SizeF(9F, 18F);
+            AutoScaleDimensions = new SizeF(12F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1133, 560);
+            ClientSize = new Size(1182, 586);
             Controls.Add(btnClose);
             Controls.Add(btnSave);
+            Controls.Add(btnCreateReport);
             Controls.Add(tabControl);
             Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
             Margin = new Padding(4, 5, 4, 5);
@@ -220,6 +233,7 @@
         private System.Windows.Forms.TabPage tabPage5;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.Button btnCreateReport;
         private ScottPlot.WinForms.FormsPlot formsPlot2;
         private ScottPlot.WinForms.FormsPlot formsPlot3;
         private ScottPlot.WinForms.FormsPlot formsPlot4;

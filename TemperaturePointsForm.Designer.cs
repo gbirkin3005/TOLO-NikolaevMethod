@@ -13,7 +13,6 @@
         private System.Windows.Forms.NumericUpDown num500Max;
         private System.Windows.Forms.NumericUpDown num600Min;
         private System.Windows.Forms.NumericUpDown num600Max;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label5;
@@ -407,7 +406,6 @@
             groupBoxRanges.PerformLayout();
             ResumeLayout(false);
         }
-        private Label label4;
         private Label label600;
         private Label label500;
     }

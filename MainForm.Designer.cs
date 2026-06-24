@@ -130,6 +130,7 @@
             groupBoxResults.Controls.Add(btnExportResults);
             groupBoxResults.Name = "groupBoxResults";
             groupBoxResults.TabStop = false;
+            groupBoxResults.Enter += groupBoxResults_Enter;
             // 
             // txtResults
             // 
@@ -292,7 +293,7 @@
             numPointCount.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             numPointCount.Minimum = new decimal(new int[] { 5, 0, 0, 0 });
             numPointCount.Name = "numPointCount";
-            numPointCount.Value = new decimal(new int[] { 30, 0, 0, 0 });
+            numPointCount.Value = new decimal(new int[] { 1000, 0, 0, 0 });
             // 
             // numStartX
             // 
@@ -320,8 +321,7 @@
             numStartY.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
             numStartY.Name = "numStartY";
             numStartY.Value = new decimal(new int[] { 25, 0, 0, int.MinValue });
-            numStartY.ValueChanged += numStartY_ValueChanged;
-            // 
+            //
             // numEndY
             // 
             resources.ApplyResources(numEndY, "numEndY");

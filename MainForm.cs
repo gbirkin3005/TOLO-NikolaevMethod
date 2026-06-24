@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Windows.Forms;
 using ClosedXML.Excel;
-using MathNet.Numerics;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.Integration;
-using static MathNet.Numerics.SpecialFunctions; // Изменено на using static
+using static MathNet.Numerics.SpecialFunctions;
 
 
 namespace LaserWeldingCalculator
@@ -90,6 +88,125 @@ namespace LaserWeldingCalculator
             btnExportYAxis.Click += btnExportYAxis_Click;
             btnShowTemperaturePoints.Click += btnShowTemperaturePoints_Click;
             btnShowGraphs.Click += btnShowGraphs_Click;
+
+            SetupMenu();
+        }
+
+        // Верхнее меню: сохранение и загрузка введённых параметров
+        private void SetupMenu()
+        {
+            var menu = new MenuStrip();
+            var miSave = new ToolStripMenuItem("Сохранить параметры…");
+            miSave.Click += SaveParameters_Click;
+            var miOpen = new ToolStripMenuItem("Открыть параметры…");
+            miOpen.Click += OpenParameters_Click;
+            menu.Items.Add(miSave);
+            menu.Items.Add(miOpen);
+            Controls.Add(menu);
+            MainMenuStrip = menu;
+        }
+
+        private void SaveParameters_Click(object? sender, EventArgs e)
+        {
+            var ps = new ParameterSet
+            {
+                Material = cboMaterial.SelectedItem?.ToString(),
+                ManualInput = chkManualInput.Checked,
+                Thickness = txtThickness.Text,
+                WidthB1 = txtWidthB1.Text,
+                WidthB2 = txtWidthB2.Text,
+                Speed = txtSpeed.Text,
+                Power = txtPower.Text,
+                ElasticModulus = txtElasticModulus.Text,
+                ThermalConductivity = txtThermalConductivity.Text,
+                VolumetricHeatCapacity = txtVolumetricHeatCapacity.Text,
+                ThermalDiffusivity = txtThermalDiffusivity.Text,
+                ThermalExpansion = txtThermalExpansion.Text,
+                HeatTransferCoeff = txtHeatTransferCoeff.Text,
+                StartX = numStartX.Value,
+                EndX = numEndX.Value,
+                StartY = numStartY.Value,
+                EndY = numEndY.Value,
+                PointCount = numPointCount.Value
+            };
+
+            using var dlg = new SaveFileDialog
+            {
+                Filter = "Параметры (*.json)|*.json|Все файлы (*.*)|*.*",
+                Title = "Сохранить параметры",
+                FileName = "параметры_сварки.json"
+            };
+            if (dlg.ShowDialog() != DialogResult.OK) return;
+
+            try
+            {
+                string json = JsonSerializer.Serialize(ps, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(dlg.FileName, json);
+                MessageBox.Show($"Параметры сохранены:\n{dlg.FileName}", "Успех",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при сохранении параметров: {ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void OpenParameters_Click(object? sender, EventArgs e)
+        {
+            using var dlg = new OpenFileDialog
+            {
+                Filter = "Параметры (*.json)|*.json|Все файлы (*.*)|*.*",
+                Title = "Открыть параметры"
+            };
+            if (dlg.ShowDialog() != DialogResult.OK) return;
+
+            try
+            {
+                var ps = JsonSerializer.Deserialize<ParameterSet>(File.ReadAllText(dlg.FileName));
+                if (ps == null)
+                {
+                    MessageBox.Show("Не удалось прочитать файл параметров", "Ошибка",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                ApplyParameters(ps);
+                MessageBox.Show("Параметры загружены", "Успех",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при открытии параметров: {ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ApplyParameters(ParameterSet ps)
+        {
+            // Сначала режим ввода и материал (они меняют состояние полей),
+            // затем перезаписываем поля сохранёнными значениями.
+            chkManualInput.Checked = ps.ManualInput;
+            if (!string.IsNullOrEmpty(ps.Material) && cboMaterial.Items.Contains(ps.Material))
+                cboMaterial.SelectedItem = ps.Material;
+
+            txtThickness.Text = ps.Thickness ?? "";
+            txtWidthB1.Text = ps.WidthB1 ?? "";
+            txtWidthB2.Text = ps.WidthB2 ?? "";
+            txtSpeed.Text = ps.Speed ?? "";
+            txtPower.Text = ps.Power ?? "";
+            txtElasticModulus.Text = ps.ElasticModulus ?? "";
+            txtThermalConductivity.Text = ps.ThermalConductivity ?? "";
+            txtVolumetricHeatCapacity.Text = ps.VolumetricHeatCapacity ?? "";
+            txtThermalDiffusivity.Text = ps.ThermalDiffusivity ?? "";
+            txtThermalExpansion.Text = ps.ThermalExpansion ?? "";
+            txtHeatTransferCoeff.Text = ps.HeatTransferCoeff ?? "";
+
+            numStartX.Value = Math.Clamp(ps.StartX, numStartX.Minimum, numStartX.Maximum);
+            numEndX.Value = Math.Clamp(ps.EndX, numEndX.Minimum, numEndX.Maximum);
+            numStartY.Value = Math.Clamp(ps.StartY, numStartY.Minimum, numStartY.Maximum);
+            numEndY.Value = Math.Clamp(ps.EndY, numEndY.Minimum, numEndY.Maximum);
+            if (ps.PointCount > 0)
+                numPointCount.Value = Math.Clamp(ps.PointCount, numPointCount.Minimum, numPointCount.Maximum);
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -293,50 +410,50 @@ namespace LaserWeldingCalculator
         {
             if (_currentParameters == null || _yAxisPoints == null || _stressResult == null) return;
 
-            txtResults.AppendText("\n=== РЕЗУЛЬТАТЫ РАСЧЁТА ДЕФОРМАЦИЙ И НАПРЯЖЕНИЙ ===\n");
+            txtResults.AppendText("\r\n=== РЕЗУЛЬТАТЫ РАСЧЁТА ДЕФОРМАЦИЙ И НАПРЯЖЕНИЙ ===\r\n");
 
             // Определение типа операции
             bool isEdgeCladding = Math.Abs(_currentParameters.WidthB1) < 0.01 ||
                                   Math.Abs(_currentParameters.WidthB2) < 0.01;
 
-            txtResults.AppendText($"Тип операции: {(isEdgeCladding ? "НАПЛАВКА НА КРОМКУ" : "СВАРКА ВСТЫК")}\n");
+            txtResults.AppendText($"Тип операции: {(isEdgeCladding ? "НАПЛАВКА НА КРОМКУ" : "СВАРКА ВСТЫК")}\r\n");
 
             // Параметры зоны пластических деформаций
             txtResults.AppendText($"Ширина зоны пластических деформаций: ");
             if (isEdgeCladding)
-                txtResults.AppendText($"{_stressResult.PlasticZoneWidth:F4} см (от кромки)\n");
+                txtResults.AppendText($"{_stressResult.PlasticZoneWidth:F4} см (от кромки)\r\n");
             else
-                txtResults.AppendText($"{2 * _stressResult.PlasticZoneWidth:F4} см (симметрично)\n");
+                txtResults.AppendText($"{2 * _stressResult.PlasticZoneWidth:F4} см (симметрично)\r\n");
 
             // Деформации
-            txtResults.AppendText($"Средняя деформация на стадии нагрева: εср.нагр = {_stressResult.AverageStrainHeating * 1e6:F2} × 10⁻⁶\n");
-            txtResults.AppendText($"Средняя остаточная деформация: εср.ост = {_stressResult.AverageStrainResidual * 1e6:F2} × 10⁻⁶\n");
-            txtResults.AppendText($"Укорочение пластины: Δℓ = {_stressResult.PlateShortening * 10:F4} мм на 1 см длины\n");
+            txtResults.AppendText($"Средняя деформация на стадии нагрева: εср.нагр = {_stressResult.AverageStrainHeating * 1e6:F2} × 10⁻⁶\r\n");
+            txtResults.AppendText($"Средняя остаточная деформация: εср.ост = {_stressResult.AverageStrainResidual * 1e6:F2} × 10⁻⁶\r\n");
+            txtResults.AppendText($"Укорочение пластины: Δℓ = {_stressResult.PlateShortening * 10:F4} мм на 1 см длины\r\n");
 
             // Напряжения на стадии нагрева
-            txtResults.AppendText("\n--- Стадия нагрева ---\n");
-            txtResults.AppendText($"Макс. сжимающее напряжение: {_stressResult.HeatingStresses.Min():F1} МПа\n");
-            txtResults.AppendText($"Макс. растягивающее напряжение: {_stressResult.HeatingStresses.Max():F1} МПа\n");
-            txtResults.AppendText($"Баланс сил ∫σ dy = {_stressResult.ForceBalanceHeating:E4} МПа·см ");
-            txtResults.AppendText($"(должно быть ≈ 0)\n");
+            txtResults.AppendText("\r\n--- Стадия нагрева ---\r\n");
+            txtResults.AppendText($"Макс. сжимающее напряжение: {_stressResult.HeatingStresses.Min():F1} МПа\r\n");
+            txtResults.AppendText($"Макс. растягивающее напряжение: {_stressResult.HeatingStresses.Max():F1} МПа\r\n");
+            txtResults.AppendText($"Баланс сил ∫σ dy = {_stressResult.ForceBalanceHeating:E4} МПа·см \r\n");
+            txtResults.AppendText($"(должно быть ≈ 0)\r\n");
 
             if (isEdgeCladding)
             {
-                txtResults.AppendText($"Баланс моментов ∫σ·y dy = {_stressResult.MomentBalanceHeating:E4} МПа·см² ");
+                txtResults.AppendText($"Баланс моментов ∫σ·y dy = {_stressResult.MomentBalanceHeating:E4} МПа·см² \r\n");
                 txtResults.AppendText($"(должно быть ≈ 0)\n");
             }
 
             // Остаточные напряжения
-            txtResults.AppendText("\n--- После полного охлаждения ---\n");
-            txtResults.AppendText($"Макс. остаточное растягивающее напряжение: {_stressResult.ResidualStresses.Max():F1} МПа\n");
-            txtResults.AppendText($"Макс. остаточное сжимающее напряжение: {_stressResult.ResidualStresses.Min():F1} МПа\n");
+            txtResults.AppendText("\r\n--- После полного охлаждения ---\r\n");
+            txtResults.AppendText($"Макс. остаточное растягивающее напряжение: {_stressResult.ResidualStresses.Max():F1} МПа\r\n");
+            txtResults.AppendText($"Макс. остаточное сжимающее напряжение: {_stressResult.ResidualStresses.Min():F1} МПа\r\n");
             txtResults.AppendText($"Баланс сил ∫σ dy = {_stressResult.ForceBalanceResidual:E4} МПа·см ");
-            txtResults.AppendText($"(должно быть ≈ 0)\n");
+            txtResults.AppendText($"(должно быть ≈ 0)\r\n");
 
             if (isEdgeCladding)
             {
                 txtResults.AppendText($"Баланс моментов ∫σ·y dy = {_stressResult.MomentBalanceResidual:E4} МПа·см² ");
-                txtResults.AppendText($"(должно быть ≈ 0)\n");
+                txtResults.AppendText($"(должно быть ≈ 0)\r\n");
             }
         }
 
@@ -528,65 +645,14 @@ namespace LaserWeldingCalculator
             }
         }
 
-        // Реализация функции Бесселя K0
+        // Функция Бесселя K0 (через MathNet.Numerics)
         private double BesselK0(double x)
         {
             if (x <= 0)
                 return double.PositiveInfinity;
 
-            return ModifiedBesselK0(x); // Используем точную реализацию
+            return BesselK(0, x);
         }
-
-        // Вспомогательная функция для BesselK0 - функция Бесселя I0
-        private double ModifiedBesselK0(double x)
-        {
-            // Используем специальные функции из MathNet.Numerics
-            // try
-            {
-                return BesselK(0, x); // Используем статический метод через using static
-            }
-            /*catch
-            {
-                // Fallback на точную реализацию из Numerical Recipes
-                if (x <= 2.0)
-                {
-                    double y = x * x / 4.0;
-                    return (-Math.Log(x / 2.0) * ModifiedBesselI0(x)) +
-                           (-0.57721566 + y * (0.42278420 + y * (0.23069756 +
-                           y * (0.03488590 + y * (0.00262698 + y * (0.00010750 +
-                           y * 0.00000740))))));
-                }
-                else
-                {
-                    double y = 2.0 / x;
-                    return (Math.Exp(-x) / Math.Sqrt(x)) *
-                           (1.25331414 + y * (-0.07832358 + y * (0.02189568 +
-                           y * (-0.01062446 + y * (0.00587872 + y * (-0.00251540 +
-                           y * 0.00053208))))));
-                }
-            }*/
-        }
-
-        /*private double ModifiedBesselI0(double x)
-        {
-            double ax = Math.Abs(x);
-
-            if (ax < 3.75)
-            {
-                double y = x / 3.75;
-                double y2 = y * y;
-                return 1.0 + y2 * (3.5156229 + y2 * (3.0899424 + y2 * (1.2067492 +
-                       y2 * (0.2659732 + y2 * (0.0360768 + y2 * 0.0045813)))));
-            }
-            else
-            {
-                double y = 3.75 / ax;
-                return (Math.Exp(ax) / Math.Sqrt(ax)) *
-                       (0.39894228 + y * (0.01328592 + y * (0.00225319 +
-                       y * (-0.00157565 + y * (0.00916281 + y * (-0.02057706 +
-                       y * (0.02635537 + y * (-0.01647633 + y * 0.00392377))))))));
-            }
-        }*/
 
         // Экспорт результатов расчётов в текстовый файл
         private void btnExportResults_Click(object? sender, EventArgs e)
@@ -692,13 +758,6 @@ namespace LaserWeldingCalculator
             form.ShowDialog();
         }
 
-        private void numStartY_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-
-
         private void btnShowGraphs_Click(object sender, EventArgs e)
         {
             if (_currentParameters == null || _xAxisPoints == null || _yAxisPoints == null || _stressResult == null)
@@ -710,6 +769,11 @@ namespace LaserWeldingCalculator
 
             var form = new GraphsForm(_currentParameters, _stressResult, _yAxisPoints, _xAxisPoints);
             form.ShowDialog();
+        }
+
+        private void groupBoxResults_Enter(object sender, EventArgs e)
+        {
+
         }
     }
 
@@ -751,9 +815,28 @@ namespace LaserWeldingCalculator
         public double Temperature { get; set; }
         public double ThermalStrain { get; set; }
         public double VxTerm { get; set; }
+    }
 
-        public double StressHeating { get; set; }
-        public double StressResidual { get; set; }
-        public double StressCorrected { get; set; }
+    // Набор введённых параметров для сохранения/загрузки (JSON)
+    public class ParameterSet
+    {
+        public string? Material { get; set; }
+        public bool ManualInput { get; set; }
+        public string? Thickness { get; set; }
+        public string? WidthB1 { get; set; }
+        public string? WidthB2 { get; set; }
+        public string? Speed { get; set; }
+        public string? Power { get; set; }
+        public string? ElasticModulus { get; set; }
+        public string? ThermalConductivity { get; set; }
+        public string? VolumetricHeatCapacity { get; set; }
+        public string? ThermalDiffusivity { get; set; }
+        public string? ThermalExpansion { get; set; }
+        public string? HeatTransferCoeff { get; set; }
+        public decimal StartX { get; set; }
+        public decimal EndX { get; set; }
+        public decimal StartY { get; set; }
+        public decimal EndY { get; set; }
+        public decimal PointCount { get; set; }
     }
 }

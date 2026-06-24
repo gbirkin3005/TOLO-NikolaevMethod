@@ -1,7 +1,8 @@
 ﻿using ScottPlot;
-using ScottPlot.Plottables;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using static MathNet.Numerics.SpecialFunctions;
@@ -525,6 +526,170 @@ namespace LaserWeldingCalculator
         private void btnClose_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        // ======================= СОЗДАНИЕ ОТЧЁТА WORD =======================
+
+        private void btnCreateReport_Click(object? sender, EventArgs e)
+        {
+            using var save = new SaveFileDialog
+            {
+                Filter = "Документ Word (*.docx)|*.docx|Все файлы (*.*)|*.*",
+                Title = "Сохранить отчёт",
+                FileName = "ТОЛО_ДЗ_отчёт.docx"
+            };
+            if (save.ShowDialog(this) != DialogResult.OK)
+                return;
+
+            try
+            {
+                Cursor = Cursors.WaitCursor;
+                var model = BuildReportModel();
+                WordReportGenerator.Generate(model, save.FileName);
+                Cursor = Cursors.Default;
+
+                if (MessageBox.Show($"Отчёт создан:\n{save.FileName}\n\nОткрыть его?",
+                        "Готово", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                {
+                    System.Diagnostics.Process.Start(
+                        new System.Diagnostics.ProcessStartInfo(save.FileName) { UseShellExecute = true });
+                }
+            }
+            catch (Exception ex)
+            {
+                Cursor = Cursors.Default;
+                MessageBox.Show($"Ошибка при создании отчёта: {ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private ReportModel BuildReportModel()
+        {
+            var iso600 = TraceIsotherm(600.0, 30);
+            var iso500 = TraceIsotherm(500.0, 30);
+
+            double zoneLenX = iso500.Count > 0 ? iso500.Max(p => p.X) - iso500.Min(p => p.X) : 0;
+            double zoneWidY = iso500.Count > 0 ? iso500.Max(p => p.Y) - iso500.Min(p => p.Y) : 0;
+
+            var graphs = new List<(string, byte[])>
+            {
+                ("Распределение температуры по оси Y (x = 0)", RenderTabPng(0, 1100, 720)),
+                ("Распределение температуры по оси X (y = 0)", RenderTabPng(1, 1100, 720)),
+                ("Изотермы температурного поля", RenderTabPng(2, 1100, 800)),
+                ("Эпюры на стадии нагрева (деформации и напряжения)", RenderTabPng(3, 1100, 1250)),
+                ("Эпюры после полного охлаждения (остаточные)", RenderTabPng(4, 1100, 1250)),
+            };
+
+            // Вернуть отображение текущей вкладки
+            TabControl_SelectedIndexChanged(null, EventArgs.Empty);
+
+            return new ReportModel
+            {
+                Parameters = _parameters,
+                CoefB = _b,
+                CoefVx2a = _vx2a,
+                CoefBessel = _besselCoeff,
+                YAxisPoints = _yAxisPoints,
+                XAxisPoints = _xAxisPoints,
+                Isotherm600 = iso600,
+                Isotherm500 = iso500,
+                ZoneLengthX = zoneLenX,
+                ZoneWidthY = zoneWidY,
+                Graphs = graphs
+            };
+        }
+
+        /// <summary>Построить вкладку и сохранить её как PNG (в байтах).</summary>
+        private byte[] RenderTabPng(int idx, int w, int h)
+        {
+            string tmp = Path.Combine(Path.GetTempPath(), $"tolo_plot_{Guid.NewGuid():N}.png");
+            switch (idx)
+            {
+                case 0: PlotTemperatureY(); formsPlot1.Plot.SavePng(tmp, w, h); break;
+                case 1: PlotTemperatureX(); formsPlot2.Plot.SavePng(tmp, w, h); break;
+                case 2: PlotIsotherms(); formsPlot3.Plot.SavePng(tmp, w, h); break;
+                case 3: PlotHeatingStage(); formsPlot4.Multiplot.SavePng(tmp, w, h); break;
+                case 4: PlotCoolingStage(); formsPlot5.Multiplot.SavePng(tmp, w, h); break;
+                default: return Array.Empty<byte>();
+            }
+            byte[] bytes = File.ReadAllBytes(tmp);
+            try { File.Delete(tmp); } catch { /* временный файл */ }
+            return bytes;
+        }
+
+        // ============== Трассировка изотерм для таблиц координат ==============
+
+        private List<TemperaturePoint> TraceIsotherm(double targetT, int maxPoints)
+        {
+            var pts = new List<TemperaturePoint>();
+            if (CalculateTemperature(0, 0) < targetT)
+                return pts; // зона такой температуры не достигается
+
+            double xb = FindAxisBoundary(targetT, -1);
+            double xf = FindAxisBoundary(targetT, +1);
+            int interior = Math.Max(2, maxPoints / 2 - 1);
+
+            AddIsoPoint(pts, xb, 0, targetT);
+            for (int i = 1; i < interior; i++)
+            {
+                double x = xb + (xf - xb) * i / interior;
+                double y = FindYAt(x, targetT);
+                if (!double.IsNaN(y) && y > 1e-4)
+                {
+                    AddIsoPoint(pts, x, y, targetT);
+                    AddIsoPoint(pts, x, -y, targetT);
+                }
+            }
+            AddIsoPoint(pts, xf, 0, targetT);
+            return pts.Take(maxPoints).ToList();
+        }
+
+        // Граница изотермы на оси y = 0 (dir = +1 — спереди источника, −1 — сзади)
+        private double FindAxisBoundary(double targetT, int dir)
+        {
+            double near = dir * 1e-3;
+            double far = dir * 2.0;
+            if (CalculateTemperature(near, 0) < targetT) return near;
+
+            int guard = 0;
+            while (CalculateTemperature(far, 0) >= targetT && guard++ < 25) far *= 1.5;
+
+            double a = near, b = far;
+            for (int i = 0; i < 80; i++)
+            {
+                double m = (a + b) / 2;
+                if (CalculateTemperature(m, 0) >= targetT) a = m; else b = m;
+            }
+            return (a + b) / 2;
+        }
+
+        // Координата y изотермы при заданном x (y > 0)
+        private double FindYAt(double x, double targetT)
+        {
+            if (CalculateTemperature(x, 0) < targetT) return double.NaN;
+            double a = 0, b = 1.0;
+            int guard = 0;
+            while (CalculateTemperature(x, b) >= targetT && guard++ < 25) b *= 1.5;
+            for (int i = 0; i < 80; i++)
+            {
+                double m = (a + b) / 2;
+                if (CalculateTemperature(x, m) >= targetT) a = m; else b = m;
+            }
+            return (a + b) / 2;
+        }
+
+        private void AddIsoPoint(List<TemperaturePoint> pts, double x, double y, double targetT)
+        {
+            double r = Math.Sqrt(x * x + y * y);
+            double arg = _besselCoeff * r;
+            pts.Add(new TemperaturePoint
+            {
+                X = x,
+                Y = y,
+                BesselArgument = arg,
+                BesselK0 = arg > 0 ? BesselK(0, arg) : double.PositiveInfinity,
+                Temperature = CalculateTemperature(x, y)
+            });
         }
     }
 }
