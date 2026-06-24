@@ -97,6 +97,7 @@ namespace LaserWeldingCalculator
                 var fillTop = temps.Select(t => Math.Max(t, 500.0)).ToArray();
                 var fill = formsPlot1.Plot.Add.FillY(yVals, fillTop, Enumerable.Repeat(500.0, temps.Length).ToArray());
                 fill.FillStyle.Color = Colors.Orange.WithAlpha(0.45f);
+                fill.LineWidth = 0;
             }
 
             formsPlot1.Plot.Title($"Распределение температуры по оси Y (x=0)\n" +
@@ -231,29 +232,19 @@ namespace LaserWeldingCalculator
             hlineAvg.LineStyle.Pattern = LinePattern.Dashed;
             hlineAvg.LegendText = $"εср.нагр = {avgStrain:F1} × 10⁻⁶";
 
-            // Упругие деформации (прямая штриховка)
-            double[] elasticStrains = thermalStrains.Select(ts => ts - avgStrain).ToArray();
-            for (int i = 0; i < yVals.Length - 1; i++)
-            {
-                if (elasticStrains[i] > 0 || elasticStrains[i + 1] > 0)
-                {
-                    var fill = pltTop.Add.FillY(
-                        new[] { yVals[i], yVals[i + 1] },
-                        new[] { thermalStrains[i], thermalStrains[i + 1] },
-                        new[] { avgStrain, avgStrain }
-                    );
-                    fill.FillStyle.Color = Colors.LightGreen.WithAlpha(0.5f);
-                }
-                else if (elasticStrains[i] < 0 || elasticStrains[i + 1] < 0)
-                {
-                    var fill = pltTop.Add.FillY(
-                        new[] { yVals[i], yVals[i + 1] },
-                        new[] { thermalStrains[i], thermalStrains[i + 1] },
-                        new[] { avgStrain, avgStrain }
-                    );
-                    fill.FillStyle.Color = Colors.LightCoral.WithAlpha(0.5f);
-                }
-            }
+            // Упругие деформации: сплошная цветная заливка одним полигоном
+            // (без посегментной штриховки, не зависит от числа точек)
+            double[] avgArr = Enumerable.Repeat(avgStrain, yVals.Length).ToArray();
+            double[] above = thermalStrains.Select(t => Math.Max(t, avgStrain)).ToArray();
+            double[] below = thermalStrains.Select(t => Math.Min(t, avgStrain)).ToArray();
+
+            var fillAbove = pltTop.Add.FillY(yVals, above, avgArr);
+            fillAbove.FillStyle.Color = Colors.LightGreen.WithAlpha(0.5f);
+            fillAbove.LineWidth = 0;
+
+            var fillBelow = pltTop.Add.FillY(yVals, below, avgArr);
+            fillBelow.FillStyle.Color = Colors.LightCoral.WithAlpha(0.5f);
+            fillBelow.LineWidth = 0;
 
             // Пластические деформации укорочения (косая штриховка - серая заливка)
             var idx500 = Array.FindIndex(_stressResult.Temperatures, t => t >= 500.0);
@@ -269,6 +260,7 @@ namespace LaserWeldingCalculator
                     new[] { avgStrain, avgStrain }
                 );
                 fillPlastic.FillStyle.Color = Colors.Gray.WithAlpha(0.3f);
+                fillPlastic.LineWidth = 0;
             }
 
             pltTop.ShowLegend();
@@ -286,28 +278,20 @@ namespace LaserWeldingCalculator
             scatterStress.LineStyle.Color = Colors.Red;
             scatterStress.LegendText = "σₓ (нагрев)";
 
-            // Заливка растяжения/сжатия
-            for (int i = 0; i < yVals.Length - 1; i++)
-            {
-                if (stresses[i] > 0 || stresses[i + 1] > 0)
-                {
-                    var fill = pltBottom.Add.FillY(
-                        new[] { yVals[i], yVals[i + 1] },
-                        new[] { stresses[i], stresses[i + 1] },
-                        new double[] { 0, 0 }
-                    );
-                    fill.FillStyle.Color = Colors.Red.WithAlpha(0.35f);
-                }
-                if (stresses[i] < 0 || stresses[i + 1] < 0)
-                {
-                    var fill = pltBottom.Add.FillY(
-                        new[] { yVals[i], yVals[i + 1] },
-                        new[] { stresses[i], stresses[i + 1] },
-                        new double[] { 0, 0 }
-                    );
-                    fill.FillStyle.Color = Colors.SteelBlue.WithAlpha(0.4f);
-                }
-            }
+            // Заливка растяжения/сжатия одним полигоном (без штриховки)
+            double[] zeros = new double[yVals.Length];
+            double[] tension = stresses.Select(s => Math.Max(s, 0.0)).ToArray();
+            double[] compression = stresses.Select(s => Math.Min(s, 0.0)).ToArray();
+
+            var fillTension = pltBottom.Add.FillY(yVals, tension, zeros);
+            fillTension.FillStyle.Color = Colors.Red.WithAlpha(0.35f);
+            fillTension.LineWidth = 0;
+            fillTension.LegendText = "Растяжение";
+
+            var fillCompression = pltBottom.Add.FillY(yVals, compression, zeros);
+            fillCompression.FillStyle.Color = Colors.SteelBlue.WithAlpha(0.4f);
+            fillCompression.LineWidth = 0;
+            fillCompression.LegendText = "Сжатие";
 
             // Линии предела текучести
             var hlineSigmaT = pltBottom.Add.HorizontalLine(200);
@@ -405,28 +389,20 @@ namespace LaserWeldingCalculator
             scatterResStress.LineStyle.Color = Colors.DarkBlue;
             scatterResStress.LegendText = "σₓ ост";
 
-            // Заливка растяжения/сжатия
-            for (int i = 0; i < yVals.Length - 1; i++)
-            {
-                if (stresses[i] > 0 || stresses[i + 1] > 0)
-                {
-                    var fill = pltBottom.Add.FillY(
-                        new[] { yVals[i], yVals[i + 1] },
-                        new[] { stresses[i], stresses[i + 1] },
-                        new double[] { 0, 0 }
-                    );
-                    fill.FillStyle.Color = Colors.DarkRed.WithAlpha(0.35f);
-                }
-                if (stresses[i] < 0 || stresses[i + 1] < 0)
-                {
-                    var fill = pltBottom.Add.FillY(
-                        new[] { yVals[i], yVals[i + 1] },
-                        new[] { stresses[i], stresses[i + 1] },
-                        new double[] { 0, 0 }
-                    );
-                    fill.FillStyle.Color = Colors.DarkCyan.WithAlpha(0.4f);
-                }
-            }
+            // Заливка растяжения/сжатия одним полигоном (без штриховки)
+            double[] zeros = new double[yVals.Length];
+            double[] tension = stresses.Select(s => Math.Max(s, 0.0)).ToArray();
+            double[] compression = stresses.Select(s => Math.Min(s, 0.0)).ToArray();
+
+            var fillTension = pltBottom.Add.FillY(yVals, tension, zeros);
+            fillTension.FillStyle.Color = Colors.DarkRed.WithAlpha(0.35f);
+            fillTension.LineWidth = 0;
+            fillTension.LegendText = "Растяжение";
+
+            var fillCompression = pltBottom.Add.FillY(yVals, compression, zeros);
+            fillCompression.FillStyle.Color = Colors.DarkCyan.WithAlpha(0.4f);
+            fillCompression.LineWidth = 0;
+            fillCompression.LegendText = "Сжатие";
 
             // Линии предела текучести
             var hlineSigmaT = pltBottom.Add.HorizontalLine(200);
