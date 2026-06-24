@@ -161,7 +161,7 @@
     <value>19</value>
   </data>
   <data name="groupBoxResults.Location" type="System.Drawing.Point, System.Drawing">
-    <value>586, 9</value>
+    <value>586, 26</value>
   </data>
   <data name="groupBoxResults.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 4, 4, 4</value>
@@ -182,13 +182,13 @@
     <value>Top, Bottom, Right</value>
   </data>
   <data name="btnExportXAxis.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 693</value>
+    <value>0, 612</value>
   </data>
   <data name="btnExportXAxis.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 4, 4, 4</value>
   </data>
   <data name="btnExportXAxis.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1332, 52</value>
+    <value>1347, 52</value>
   </data>
   <data name="btnExportXAxis.TabIndex" type="System.Int32, mscorlib">
     <value>2</value>
@@ -203,13 +203,13 @@
     <value>None</value>
   </data>
   <data name="dgvXAxis.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 34</value>
+    <value>7, -6</value>
   </data>
   <data name="dgvXAxis.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 4, 4, 4</value>
   </data>
   <data name="dgvXAxis.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1328, 654</value>
+    <value>1328, 610</value>
   </data>
   <data name="tabPageXAxis.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 39</value>
@@ -218,19 +218,19 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="tabPageXAxis.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1332, 745</value>
+    <value>1347, 664</value>
   </data>
   <data name="tabPageXAxis.Text" xml:space="preserve">
     <value>Таблица 1. По оси X (y=0)</value>
   </data>
   <data name="btnExportYAxis.Location" type="System.Drawing.Point, System.Drawing">
-    <value>0, 693</value>
+    <value>0, 612</value>
   </data>
   <data name="btnExportYAxis.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 4, 4, 4</value>
   </data>
   <data name="btnExportYAxis.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1332, 52</value>
+    <value>1347, 52</value>
   </data>
   <data name="btnExportYAxis.Text" xml:space="preserve">
     <value>Экспорт таблицы 2 в Excel</value>
@@ -242,7 +242,7 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="dgvYAxis.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1332, 745</value>
+    <value>1347, 664</value>
   </data>
   <data name="tabPageYAxis.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 39</value>
@@ -251,22 +251,22 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="tabPageYAxis.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1332, 745</value>
+    <value>1347, 664</value>
   </data>
   <data name="tabPageYAxis.Text" xml:space="preserve">
     <value>Таблица 2. По оси Y (x=0)</value>
   </data>
   <data name="tabControlTables.Location" type="System.Drawing.Point, System.Drawing">
-    <value>2, 40</value>
+    <value>-10, 40</value>
   </data>
   <data name="tabControlTables.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 4, 4, 4</value>
   </data>
   <data name="tabControlTables.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1340, 788</value>
+    <value>1355, 707</value>
   </data>
   <data name="groupBoxTables.Location" type="System.Drawing.Point, System.Drawing">
-    <value>582, 410</value>
+    <value>586, 430</value>
   </data>
   <data name="groupBoxTables.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 4, 4, 4</value>
@@ -275,7 +275,7 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="groupBoxTables.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1353, 837</value>
+    <value>1353, 756</value>
   </data>
   <data name="groupBoxTables.TabIndex" type="System.Int32, mscorlib">
     <value>20</value>
@@ -716,7 +716,7 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="groupBoxInput.Size" type="System.Drawing.Size, System.Drawing">
-    <value>573, 1165</value>
+    <value>573, 1198</value>
   </data>
   <data name="tabPage1.Location" type="System.Drawing.Point, System.Drawing">
     <value>4, 39</value>
@@ -728,21 +728,18 @@
     <value>4, 4, 4, 4</value>
   </data>
   <data name="tabPage1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1939, 1173</value>
+    <value>1939, 1206</value>
   </data>
   <data name="tabControl1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 4, 4, 4</value>
   </data>
   <data name="tabControl1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1947, 1216</value>
+    <value>1947, 1249</value>
   </data>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>12, 30</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>1947, 1216</value>
-  </data>
-  <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
-    <value>4, 4, 4, 4</value>
+    <value>1947, 1249</value>
   </data>
 </root>

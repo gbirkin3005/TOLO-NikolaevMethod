@@ -231,6 +231,43 @@ namespace LaserWeldingCalculator
 
             // Блокировка полей для ручного ввода
             SetMaterialPropertiesControlsEnabled(false);
+
+            SetupAdaptiveLayout();
+        }
+
+        // Делает содержимое вкладки адаптивным: левая колонка ввода остаётся
+        // фиксированной, а блоки результатов и таблиц растягиваются в свободную
+        // область при изменении размеров окна.
+        private void SetupAdaptiveLayout()
+        {
+            // Якоря: правая область тянется по ширине, таблицы — по ширине и высоте.
+            groupBoxResults.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            groupBoxTables.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            tabControlTables.Dock = DockStyle.Fill;
+            // Кнопка экспорта результатов была за пределами своей группы — закрепляем по низу
+            btnExportResults.Dock = DockStyle.Bottom;
+
+            // Габариты содержимого вкладки (в текущем масштабе DPI) — чтобы окно
+            // открывалось с размером, при котором всё видно, и не ужималось ниже.
+            int needRight = 0, needBottom = 0;
+            foreach (Control c in tabPage1.Controls)
+            {
+                needRight = Math.Max(needRight, c.Right);
+                needBottom = Math.Max(needBottom, c.Bottom);
+            }
+
+            AutoSize = false;
+
+            // Разница между клиентской областью окна и вкладки (меню + рамки + ярлычки вкладки)
+            int extraW = Math.Max(0, ClientSize.Width - tabPage1.ClientSize.Width);
+            int extraH = Math.Max(0, ClientSize.Height - tabPage1.ClientSize.Height);
+
+            int targetW = needRight + 16 + extraW;
+            int targetH = needBottom + 16 + extraH;
+            ClientSize = new System.Drawing.Size(
+                Math.Max(ClientSize.Width, targetW),
+                Math.Max(ClientSize.Height, targetH));
+            MinimumSize = Size;
         }
 
         private void cboMaterial_SelectedIndexChanged(object? sender, EventArgs e)

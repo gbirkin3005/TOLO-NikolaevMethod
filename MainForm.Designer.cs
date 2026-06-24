@@ -321,7 +321,7 @@
             numStartY.Minimum = new decimal(new int[] { 1000, 0, 0, int.MinValue });
             numStartY.Name = "numStartY";
             numStartY.Value = new decimal(new int[] { 25, 0, 0, int.MinValue });
-            //
+            // 
             // numEndY
             // 
             resources.ApplyResources(numEndY, "numEndY");
