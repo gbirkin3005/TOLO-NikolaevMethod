@@ -142,63 +142,102 @@ namespace LaserWeldingCalculator
         {
             formsPlot3.Plot.Clear();
 
-            // Определение диапазонов
-            double xMin = -0.6, xMax = 0.3;
-            double yMin, yMax;
+            // Область отображения подбираем под само тепловое поле (по изотерме 100 °C),
+            // а не под ширину пластины — иначе горячая зона занимает доли процента кадра.
+            double peak = CalculateTemperature(0, 0);
+            double refT = peak > 100.0 ? 100.0 : peak * 0.1;
 
-            if (_isEdgeCladding)
+            double xb = FindAxisBoundary(refT, -1);
+            double xf = FindAxisBoundary(refT, +1);
+            double yMaxRef = 0;
+            for (int i = 0; i <= 40; i++)
             {
-                yMin = _stressResult.YCoordinates[0];
-                yMax = _stressResult.YCoordinates[^1];
+                double xx = xb + (xf - xb) * i / 40.0;
+                double yy = FindYAt(xx, refT);
+                if (!double.IsNaN(yy)) yMaxRef = Math.Max(yMaxRef, yy);
             }
-            else
-            {
-                double halfWidth = (_parameters.WidthB1 + _parameters.WidthB2) / 2.0 * 0.7;
-                yMin = -halfWidth;
-                yMax = halfWidth;
-            }
+            if (yMaxRef < 1e-3) yMaxRef = Math.Abs(xf - xb) * 0.3;
 
-            // Генерация сетки
-            int gridSize = 150;
-            double[] x = GenerateLinearRange(xMin, xMax, gridSize);
-            double[] y = GenerateLinearRange(yMin, yMax, gridSize);
-            double[,] Z = new double[gridSize, gridSize];
+            double xMin = xb - (xf - xb) * 0.12;
+            double xMax = xf + (xf - xb) * 0.12;
+            double yMin = -yMaxRef * 1.25;
+            double yMax = yMaxRef * 1.25;
 
-            for (int i = 0; i < gridSize; i++)
-            {
-                for (int j = 0; j < gridSize; j++)
-                {
-                    Z[j, i] = CalculateTemperature(x[i], y[j]);
-                }
-            }
+            // Сетка высокого разрешения + сглаживание. Цвет ограничиваем сверху,
+            // чтобы пик температуры в центре не «съедал» весь градиент.
+            const double displayMax = 1200.0;
+            int nx = 320, ny = 320;
+            double[] x = GenerateLinearRange(xMin, xMax, nx);
+            double[] y = GenerateLinearRange(yMin, yMax, ny);
+            double[,] Z = new double[ny, nx];
+            for (int i = 0; i < nx; i++)
+                for (int j = 0; j < ny; j++)
+                    Z[j, i] = Math.Min(CalculateTemperature(x[i], y[j]), displayMax);
 
-            // Тепловая карта
             var heatmap = formsPlot3.Plot.Add.Heatmap(Z);
             heatmap.Colormap = new ScottPlot.Colormaps.Turbo();
             heatmap.Extent = new CoordinateRect(xMin, xMax, yMin, yMax);
+            heatmap.Smooth = true;
 
-            // Контурные линии
-            ScottPlot.Coordinates3d[,] coords3d = new ScottPlot.Coordinates3d[gridSize, gridSize];
-            for (int i = 0; i < gridSize; i++)
-                for (int j = 0; j < gridSize; j++)
-                    coords3d[j, i] = new ScottPlot.Coordinates3d(x[i], y[j], Z[j, i]);
+            var cbar = formsPlot3.Plot.Add.ColorBar(heatmap);
+            cbar.Label = $"Температура, °C (шкала до {displayMax:F0})";
 
-            var contour = formsPlot3.Plot.Add.ContourLines(coords3d);
-            contour.LineStyle.Color = Colors.Black.WithAlpha(0.7f);
-            contour.LineStyle.Width = 1.5f;
-            contour.LabelStyle.IsVisible = true;
+            // Точные изотермы (трассировка по полю), включая ключевые 500 и 600 °C
+            AddIsothermCurve(100, Colors.White.WithAlpha(0.85f), 1.5f);
+            AddIsothermCurve(300, Colors.Cyan, 1.5f);
+            AddIsothermCurve(500, Colors.Yellow, 2.5f);
+            AddIsothermCurve(600, Colors.Red, 2.5f);
+            AddIsothermCurve(1000, Colors.Magenta, 1.5f);
 
-            // Ось шва или кромка
+            // Ось шва / кромка
             var hlineAxis = formsPlot3.Plot.Add.HorizontalLine(0);
             hlineAxis.LineStyle.Color = _isEdgeCladding ? Colors.DarkBlue : Colors.Blue;
-            hlineAxis.LineStyle.Width = 3;
+            hlineAxis.LineStyle.Width = 2;
+            hlineAxis.LineStyle.Pattern = LinePattern.Dotted;
 
             formsPlot3.Plot.Title($"Изотермы температурного поля\n" +
                 $"{(_isEdgeCladding ? "Наплавка на кромку" : "Сварка встык")}");
             formsPlot3.Plot.Axes.Bottom.Label.Text = "x, см";
             formsPlot3.Plot.Axes.Left.Label.Text = "y, см";
+            formsPlot3.Plot.ShowLegend();
             formsPlot3.Plot.Axes.SetLimits(xMin, xMax, yMin, yMax);
             formsPlot3.Refresh();
+        }
+
+        // Точная изотерма заданной температуры как замкнутая кривая (трассировка поля)
+        private void AddIsothermCurve(double targetT, ScottPlot.Color color, float width)
+        {
+            if (CalculateTemperature(0, 0) < targetT) return;
+
+            double xb = FindAxisBoundary(targetT, -1);
+            double xf = FindAxisBoundary(targetT, +1);
+            const int samples = 60;
+
+            double[] xsU = new double[samples + 1];
+            double[] ysU = new double[samples + 1];
+            for (int i = 0; i <= samples; i++)
+            {
+                double xx = xb + (xf - xb) * i / samples;
+                double yy = FindYAt(xx, targetT);
+                xsU[i] = xx;
+                ysU[i] = double.IsNaN(yy) ? 0.0 : yy;
+            }
+
+            // Замкнутый контур: верхняя ветвь слева→направо, затем нижняя справа→налево
+            double[] xs = new double[(samples + 1) * 2];
+            double[] ys = new double[(samples + 1) * 2];
+            for (int i = 0; i <= samples; i++) { xs[i] = xsU[i]; ys[i] = ysU[i]; }
+            for (int i = 0; i <= samples; i++)
+            {
+                xs[samples + 1 + i] = xsU[samples - i];
+                ys[samples + 1 + i] = -ysU[samples - i];
+            }
+
+            var sc = formsPlot3.Plot.Add.Scatter(xs, ys);
+            sc.Color = color;
+            sc.LineWidth = width;
+            sc.MarkerSize = 0;
+            sc.LegendText = $"{targetT:F0} °C";
         }
 
         private void PlotHeatingStage()
